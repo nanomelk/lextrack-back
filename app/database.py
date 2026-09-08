@@ -22,6 +22,23 @@ _client: gspread.Client | None = None
 _spreadsheet: gspread.Spreadsheet | None = None
 
 
+def _buscar_archivo_credenciales() -> str | None:
+    """Busca el archivo de credenciales en múltiples rutas estándar (incluyendo Render)."""
+    candidatos = [
+        GOOGLE_CREDENTIALS_PATH,
+        "/etc/secrets/credentials.json",
+        "/etc/secrets/credentials",
+        os.path.join(os.getcwd(), "credentials.json"),
+        os.path.join(os.path.dirname(__file__), "..", "credentials.json"),
+        os.path.join(os.path.dirname(__file__), "..", "..", "credentials.json"),
+        "credentials.json",
+    ]
+    for ruta in candidatos:
+        if ruta and os.path.isfile(ruta):
+            return os.path.abspath(ruta)
+    return None
+
+
 def get_client() -> gspread.Client:
     """Retorna un cliente gspread autenticado (singleton)."""
     global _client
@@ -36,17 +53,21 @@ def get_client() -> gspread.Client:
                 raise ValueError(
                     f"Error al procesar la variable GOOGLE_CREDENTIALS_JSON: {exc}"
                 ) from exc
-        elif os.path.exists(GOOGLE_CREDENTIALS_PATH):
-            creds = Credentials.from_service_account_file(
-                GOOGLE_CREDENTIALS_PATH, scopes=SCOPES
-            )
         else:
-            raise FileNotFoundError(
-                f"Archivo de credenciales no encontrado en la ruta: '{GOOGLE_CREDENTIALS_PATH}' "
-                "y no se definió la variable GOOGLE_CREDENTIALS_JSON."
-            )
+            archivo_encontrado = _buscar_archivo_credenciales()
+            if archivo_encontrado:
+                creds = Credentials.from_service_account_file(
+                    archivo_encontrado, scopes=SCOPES
+                )
+            else:
+                raise FileNotFoundError(
+                    f"Archivo de credenciales no encontrado. Se buscó en: '{GOOGLE_CREDENTIALS_PATH}', "
+                    "'/etc/secrets/credentials.json' y 'credentials.json'. "
+                    "También puedes configurar la variable GOOGLE_CREDENTIALS_JSON en Render."
+                )
         _client = gspread.authorize(creds)
     return _client
+
 
 
 
