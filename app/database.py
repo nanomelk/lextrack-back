@@ -2,10 +2,15 @@
 database.py - Conexión con Google Sheets API usando gspread y Service Account.
 Expone un cliente singleton thread-safe para ser utilizado en toda la aplicación.
 """
+import json
 import os
 import gspread
 from google.oauth2.service_account import Credentials
-from app.config import GOOGLE_CREDENTIALS_PATH, GOOGLE_SHEETS_SPREADSHEET_ID
+from app.config import (
+    GOOGLE_CREDENTIALS_PATH,
+    GOOGLE_CREDENTIALS_JSON,
+    GOOGLE_SHEETS_SPREADSHEET_ID,
+)
 
 # Scopes necesarios para Sheets y Drive
 SCOPES = [
@@ -21,15 +26,28 @@ def get_client() -> gspread.Client:
     """Retorna un cliente gspread autenticado (singleton)."""
     global _client
     if _client is None:
-        if not os.path.exists(GOOGLE_CREDENTIALS_PATH):
-            raise FileNotFoundError(
-                f"Archivo de credenciales no encontrado en la ruta: '{GOOGLE_CREDENTIALS_PATH}'"
+        if GOOGLE_CREDENTIALS_JSON:
+            try:
+                creds_info = json.loads(GOOGLE_CREDENTIALS_JSON)
+                creds = Credentials.from_service_account_info(
+                    creds_info, scopes=SCOPES
+                )
+            except Exception as exc:
+                raise ValueError(
+                    f"Error al procesar la variable GOOGLE_CREDENTIALS_JSON: {exc}"
+                ) from exc
+        elif os.path.exists(GOOGLE_CREDENTIALS_PATH):
+            creds = Credentials.from_service_account_file(
+                GOOGLE_CREDENTIALS_PATH, scopes=SCOPES
             )
-        creds = Credentials.from_service_account_file(
-            GOOGLE_CREDENTIALS_PATH, scopes=SCOPES
-        )
+        else:
+            raise FileNotFoundError(
+                f"Archivo de credenciales no encontrado en la ruta: '{GOOGLE_CREDENTIALS_PATH}' "
+                "y no se definió la variable GOOGLE_CREDENTIALS_JSON."
+            )
         _client = gspread.authorize(creds)
     return _client
+
 
 
 def get_spreadsheet() -> gspread.Spreadsheet:
