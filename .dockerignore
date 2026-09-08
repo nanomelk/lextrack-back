@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────
+# .dockerignore — Backend
+# Excluye archivos innecesarios del contexto de build
+# ─────────────────────────────────────────────────────────────────
+
+# Entornos virtuales de Python
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Archivos de credenciales REALES (nunca al contenedor via COPY)
+credentials.json
+.env
+
+# Tests y herramientas de desarrollo
+tests/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# IDE y sistema operativo
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Documentación
+DOCS.md
+*.md
+
+# Git
+.git/
+.gitignore
