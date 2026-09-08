@@ -14,12 +14,14 @@ GOOGLE_SHEETS_SPREADSHEET_ID: str = (
 # Soportar credenciales pasadas directamente como JSON string en variable de entorno
 GOOGLE_CREDENTIALS_JSON: str = os.getenv("GOOGLE_CREDENTIALS_JSON", "").strip()
 
-# Soportar CREDENTIALS_FILE o GOOGLE_CREDENTIALS_PATH con fallback y strip
-GOOGLE_CREDENTIALS_PATH: str = (
+# Soportar CREDENTIALS_FILE o GOOGLE_CREDENTIALS_PATH con fallback a /etc/secrets/credentials.json o credentials.json
+CREDENTIALS_FILE: str = (
     os.getenv("CREDENTIALS_FILE")
     or os.getenv("GOOGLE_CREDENTIALS_PATH")
-    or "credentials.json"
+    or ("/etc/secrets/credentials.json" if os.path.exists("/etc/secrets/credentials.json") else "credentials.json")
 ).strip()
+GOOGLE_CREDENTIALS_PATH: str = CREDENTIALS_FILE
+
 
 _default_origins = "http://localhost:5173,http://localhost:3000,https://lextrack-liard.vercel.app"
 CORS_ORIGINS: list[str] = [
