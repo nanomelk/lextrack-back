@@ -98,3 +98,54 @@ def get_worksheet(sheet_name: str) -> gspread.Worksheet:
         return spreadsheet.worksheet(sheet_name)
     except gspread.exceptions.WorksheetNotFound:
         return spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=20)
+
+
+# ---------------------------------------------------------------------------
+# MongoDB Client (Motor AsyncIOMotorClient para n8n chat_histories)
+# ---------------------------------------------------------------------------
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
+from app.config import MONGODB_URL, DATABASE_NAME, MONGODB_CHAT_COLLECTION
+
+_motor_client: AsyncIOMotorClient | None = None
+
+
+def get_motor_client() -> AsyncIOMotorClient:
+    """Retorna una instancia singleton de AsyncIOMotorClient con timeouts configurados."""
+    global _motor_client
+    if _motor_client is None:
+        if not MONGODB_URL:
+            raise ValueError("MONGODB_URL no está configurada.")
+        logger.info("🔌 Inicializando cliente Motor Async MongoDB: %s (DB: %s)", MONGODB_URL, DATABASE_NAME)
+        _motor_client = AsyncIOMotorClient(
+            MONGODB_URL,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+        )
+    return _motor_client
+
+
+def get_database() -> AsyncIOMotorDatabase:
+    """Retorna la base de datos asíncrona de MongoDB (DATABASE_NAME)."""
+    client = get_motor_client()
+    return client[DATABASE_NAME]
+
+
+def get_chat_collection() -> AsyncIOMotorCollection:
+    """Retorna la colección asíncrona 'chat_histories' de n8n."""
+    db = get_database()
+    return db[MONGODB_CHAT_COLLECTION]
+
+
+async def test_mongo_connection() -> dict:
+    """Verifica y ejecuta un ping a MongoDB Atlas / servidor."""
+    try:
+        client = get_motor_client()
+        # El comando ping valida la autenticación y conectividad
+        ping_result = await client.admin.command('ping')
+        logger.info("✅ Conexión a MongoDB exitosa: %s", ping_result)
+        return {"status": "connected", "database": DATABASE_NAME, "ping": ping_result}
+    except Exception as exc:
+        logger.error("❌ Error de conexión a MongoDB: %s", exc)
+        return {"status": "error", "database": DATABASE_NAME, "detail": str(exc)}
+
+

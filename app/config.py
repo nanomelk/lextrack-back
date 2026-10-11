@@ -40,3 +40,25 @@ WHATSAPP_VERIFY_TOKEN: str = os.getenv("WHATSAPP_VERIFY_TOKEN", "").strip()
 WHATSAPP_API_TOKEN: str = os.getenv("WHATSAPP_API_TOKEN", "").strip()
 WHATSAPP_PHONE_NUMBER_ID: str = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "").strip()
 
+# MongoDB Configuration (n8n chat histories con Motor async)
+MONGODB_URL: str = (
+    os.getenv("MONGODB_URL")
+    or os.getenv("MONGODB_URI")
+    or os.getenv("MONGO_URI")
+    or "mongodb://localhost:27017"
+).strip()
+MONGODB_URI: str = MONGODB_URL
+
+DATABASE_NAME: str = (
+    os.getenv("DATABASE_NAME")
+    or os.getenv("MONGODB_DB_NAME")
+    or os.getenv("MONGO_DB_NAME")
+    or "lextrack_db"
+).strip()
+MONGODB_DB_NAME: str = DATABASE_NAME
+
+MONGODB_CHAT_COLLECTION: str = os.getenv(
+    "MONGODB_CHAT_COLLECTION", "chat_histories"
+).strip()
+
+

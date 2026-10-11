@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS production
+
 
 LABEL maintainer="LexTrack"
 LABEL description="Backend FastAPI — Sistema de Gestión de Casos Jurídicos"
